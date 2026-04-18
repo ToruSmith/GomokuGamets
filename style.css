@@ -383,11 +383,18 @@ body {
     /* ── Layout ── */
     .game-area {
         grid-template-columns: 1fr;
-        padding-bottom: 80px; /* space for fixed bottom bar */
+        /* safe-area-inset-bottom handles iPhone home bar; 88px covers the button bar itself */
+        padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
     }
     .info-panel,.controls-panel { order: 2; }
     .board-container { order: 1; padding: 10px; flex-direction: column; align-items: center; }
-    .board { width: min(92vw,500px); height: min(92vw,500px); }
+    /* cap board by viewport height so the header doesn't get scrolled off-screen.
+       360px = header + turn-banner + info-panel + bottom-bar + spacing (rough total).
+       On typical phones (>=700px tall) the 92vw constraint still wins, gameplay unchanged. */
+    .board {
+        width:  min(92vw, calc(100dvh - 360px), 500px);
+        height: min(92vw, calc(100dvh - 360px), 500px);
+    }
 
     /* ── Turn Banner ── */
     .turn-banner {
@@ -459,6 +466,8 @@ body {
         border-top: 1px solid var(--glass-border);
         box-shadow: 0 -4px 24px var(--shadow-color);
         border-radius: 0;
+        /* total bar height: 8px top + 56px btn + (8px+safe-area) bottom
+           must match game-area padding-bottom above */
     }
     .control-group {
         flex: 1;
