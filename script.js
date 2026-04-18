@@ -528,20 +528,8 @@ class GomokuGame {
         this.showLobbySection('home');
     }
 
-    closeLobbyModal() {
-        // 若還在等待/對戰中，取消前必須先清掉所有線上狀態
-        // （否則 onlineMode 殘留會導致棋盤卡住、AI/悔棋失效）
-        if (this.onlineMode || this.roomId) {
-            this._cleanupOnlineState();
-        }
-        this.lobbyModal.style.display = 'none';
-        this.showLobbySection('home');
-        if (this.roomCodeInput) this.roomCodeInput.value = '';
-        this.hideLobbyError();
-    }
-
-    // 線上狀態完整清理（關 listener、重置所有 flag、恢復按鈕）
-    _cleanupOnlineState() {
+    // ── 線上狀態完整清理（供 closeLobbyModal 與 leaveRoom 共用）──
+    _cleanupOnline() {
         if (this.db && this.roomId && this.roomListener) {
             off(ref(this.db, `rooms/${this.roomId}`));
             this.roomListener = null;
@@ -551,9 +539,21 @@ class GomokuGame {
         this.myColor     = null;
         this.lastSyncedMoveCount = 0;
 
-        if (this.aiBtn)    this.aiBtn.disabled    = false;
-        if (this.undoBtn)  this.undoBtn.disabled  = false;
+        if (this.aiBtn)         this.aiBtn.disabled  = false;
+        if (this.undoBtn)       this.undoBtn.disabled = false;
         if (this.onlineStatusEl) this.onlineStatusEl.classList.add('hidden');
+    }
+
+    closeLobbyModal() {
+        // ★ 取消前先清掉線上狀態，否則 onlineMode 殘留會
+        //   造成棋盤只能下一子就卡住、AI 和悔棋按鈕失效
+        if (this.onlineMode || this.roomId) {
+            this._cleanupOnline();
+        }
+        this.lobbyModal.style.display = 'none';
+        this.showLobbySection('home');
+        if (this.roomCodeInput) this.roomCodeInput.value = '';
+        this.hideLobbyError();
     }
 
     showLobbySection(section) {
@@ -696,7 +696,12 @@ class GomokuGame {
             }
         }
 
-        this.currentPlayer = data.currentPlayer ?? 'black';
+        // ★ 只在對戰「進行中」才同步 currentPlayer
+        //   等待中（waiting）不可覆蓋本地輪次，否則
+        //   取消房間後下一手會錯誤地變回 black
+        if (data.status === 'playing') {
+            this.currentPlayer = data.currentPlayer ?? 'black';
+        }
         this.updateUI();
     }
 
@@ -729,7 +734,7 @@ class GomokuGame {
 
     leaveRoom() {
         if (!confirm('確定要離開房間嗎？')) return;
-        this._cleanupOnlineState();
+        this._cleanupOnline();
         this.resetGame();
     }
 
@@ -882,8 +887,13 @@ class GomokuGame {
 
     toggleSound() {
         this.soundEnabled = !this.soundEnabled;
-        const icon = this.soundToggle?.querySelector('.btn-icon');
-        if (icon) icon.textContent = this.soundEnabled ? '🔊' : '🔇';
+        if (!this.soundToggle) return;
+        // sound-toggle 是 icon-btn，emoji 直接放在 <button> 裡（無子 span）
+        // 先找 .btn-icon 子元素；找不到就直接改 button 本身的 textContent
+        const iconEl = this.soundToggle.querySelector('.btn-icon');
+        const emoji  = this.soundEnabled ? '🔊' : '🔇';
+        if (iconEl) iconEl.textContent = emoji;
+        else        this.soundToggle.textContent = emoji;
     }
 }
 
