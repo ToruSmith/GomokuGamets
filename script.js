@@ -529,10 +529,31 @@ class GomokuGame {
     }
 
     closeLobbyModal() {
+        // 若還在等待/對戰中，取消前必須先清掉所有線上狀態
+        // （否則 onlineMode 殘留會導致棋盤卡住、AI/悔棋失效）
+        if (this.onlineMode || this.roomId) {
+            this._cleanupOnlineState();
+        }
         this.lobbyModal.style.display = 'none';
         this.showLobbySection('home');
         if (this.roomCodeInput) this.roomCodeInput.value = '';
         this.hideLobbyError();
+    }
+
+    // 線上狀態完整清理（關 listener、重置所有 flag、恢復按鈕）
+    _cleanupOnlineState() {
+        if (this.db && this.roomId && this.roomListener) {
+            off(ref(this.db, `rooms/${this.roomId}`));
+            this.roomListener = null;
+        }
+        this.onlineMode  = false;
+        this.roomId      = null;
+        this.myColor     = null;
+        this.lastSyncedMoveCount = 0;
+
+        if (this.aiBtn)    this.aiBtn.disabled    = false;
+        if (this.undoBtn)  this.undoBtn.disabled  = false;
+        if (this.onlineStatusEl) this.onlineStatusEl.classList.add('hidden');
     }
 
     showLobbySection(section) {
@@ -708,18 +729,7 @@ class GomokuGame {
 
     leaveRoom() {
         if (!confirm('確定要離開房間嗎？')) return;
-        if (this.roomListener && this.roomId) {
-            off(ref(this.db, `rooms/${this.roomId}`));
-            this.roomListener = null;
-        }
-        this.onlineMode = false;
-        this.roomId     = null;
-        this.myColor    = null;
-        this.lastSyncedMoveCount = 0;
-
-        if (this.onlineStatusEl) this.onlineStatusEl.classList.add('hidden');
-        if (this.aiBtn) this.aiBtn.disabled = false;
-        if (this.undoBtn) this.undoBtn.disabled = false;
+        this._cleanupOnlineState();
         this.resetGame();
     }
 
@@ -872,15 +882,8 @@ class GomokuGame {
 
     toggleSound() {
         this.soundEnabled = !this.soundEnabled;
-        if (!this.soundToggle) return;
-        // sound-toggle 是 icon-btn（emoji 直接在 button，無子 span），兩種結構都支援
-        const icon = this.soundToggle.querySelector('.btn-icon');
-        const emoji = this.soundEnabled ? '🔊' : '🔇';
-        if (icon) {
-            icon.textContent = emoji;
-        } else {
-            this.soundToggle.textContent = emoji;
-        }
+        const icon = this.soundToggle?.querySelector('.btn-icon');
+        if (icon) icon.textContent = this.soundEnabled ? '🔊' : '🔇';
     }
 }
 
