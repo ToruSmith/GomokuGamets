@@ -507,8 +507,20 @@ html[data-theme="dark"] .diff-seg-btn.is-active {
         font-size: 0;   /* hide default size, override below */
         min-height: 56px;
     }
-    .btn-icon { font-size: 1.4rem; line-height: 1; }
-    .btn-text { font-size: 0.65rem; font-weight: 600; line-height: 1.2; }
+    .btn-icon {
+        font-size: 22px;   /* px 避免 Android 在父 font-size:0 時 rem 解析異常 */
+        line-height: 1;
+        color: inherit;    /* 明確繼承按鈕顏色 */
+        display: block;
+    }
+    .btn-text {
+        font-size: 11px;   /* 同上，用 px */
+        font-weight: 600;
+        line-height: 1.2;
+        color: inherit;    /* 明確繼承按鈕顏色 */
+        display: block;
+        white-space: nowrap;
+    }
 
     /* Keep hover/active effects but no translateY on mobile */
     .btn-primary:hover,.btn-secondary:hover,.btn-accent:hover,.btn-online:hover {

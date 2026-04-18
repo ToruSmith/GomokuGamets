@@ -872,8 +872,15 @@ class GomokuGame {
 
     toggleSound() {
         this.soundEnabled = !this.soundEnabled;
-        const icon = this.soundToggle?.querySelector('.btn-icon');
-        if (icon) icon.textContent = this.soundEnabled ? '🔊' : '🔇';
+        if (!this.soundToggle) return;
+        // sound-toggle 是 icon-btn（emoji 直接在 button，無子 span），兩種結構都支援
+        const icon = this.soundToggle.querySelector('.btn-icon');
+        const emoji = this.soundEnabled ? '🔊' : '🔇';
+        if (icon) {
+            icon.textContent = emoji;
+        } else {
+            this.soundToggle.textContent = emoji;
+        }
     }
 }
 
