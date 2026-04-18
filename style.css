@@ -493,31 +493,33 @@ html[data-theme="dark"] .diff-seg-btn.is-active {
         box-shadow: 0 -4px 24px var(--shadow-color);
         border-radius: 0;
     }
-    /* Flatten control-groups so all 4 buttons share the bar equally */
+    /* 底部工具列：把 control-group 展平，讓四顆按鈕平分空間 */
     .control-group {
         display: contents;
     }
-    .btn {
+    /* ⚠️ 以下樣式只限底部工具列的按鈕（.controls-panel .btn）
+       不可套用在 modal 等其他地方的 .btn，否則純文字按鈕的文字會消失 */
+    .controls-panel .btn {
         flex: 1;
-        width: 100%;
         flex-direction: column;
         gap: 2px;
         padding: 6px 4px;
         border-radius: 10px;
-        font-size: 0;   /* hide default size, override below */
+        font-size: 0;        /* 隱藏預設大小，由 .btn-icon/.btn-text 覆蓋 */
         min-height: 56px;
     }
-    .btn-icon {
-        font-size: 22px;   /* px 避免 Android 在父 font-size:0 時 rem 解析異常 */
+    /* 用 px 而非 rem，避免部分 Android WebKit 在父 font-size:0 時 rem 解析為 0 */
+    .controls-panel .btn .btn-icon {
+        font-size: 22px;
         line-height: 1;
-        color: inherit;    /* 明確繼承按鈕顏色 */
+        color: inherit;
         display: block;
     }
-    .btn-text {
-        font-size: 11px;   /* 同上，用 px */
+    .controls-panel .btn .btn-text {
+        font-size: 11px;
         font-weight: 600;
         line-height: 1.2;
-        color: inherit;    /* 明確繼承按鈕顏色 */
+        color: inherit;
         display: block;
         white-space: nowrap;
     }
