@@ -188,6 +188,19 @@ class GomokuGame {
         this.boardEl.addEventListener('mousemove', (e) => this.handleHover(e));
         this.boardEl.addEventListener('mouseleave',()  => this.removeHover());
 
+        // ── 觸控支援（手機 / 平板）──
+        this.boardEl.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.changedTouches[0];
+            this.handleClick({ clientX: t.clientX, clientY: t.clientY });
+        }, { passive: false });
+        this.boardEl.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const t = e.changedTouches[0];
+            this.handleHover({ clientX: t.clientX, clientY: t.clientY });
+        }, { passive: false });
+        this.boardEl.addEventListener('touchend', () => this.removeHover());
+
         this.resetBtn?.addEventListener('click', () => {
             if (this.moveHistory.length === 0 || confirm('確定要重新開始嗎？')) this.resetGame();
         });

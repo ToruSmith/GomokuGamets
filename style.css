@@ -79,6 +79,8 @@ body {
     color: #e74c3c; border-radius: 8px; padding: 4px 10px;
     font-size: 0.8rem; cursor: pointer; font-weight: 600;
     transition: all 0.2s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 .btn-sm-danger:hover { background: rgba(231,76,60,0.3); }
 
@@ -86,6 +88,8 @@ body {
     background: transparent; border: none; cursor: pointer;
     font-size: 1.5rem; padding: 8px; border-radius: 50%;
     transition: all 0.3s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 .icon-btn:hover { background: rgba(0,0,0,0.1); transform: rotate(15deg); }
 
@@ -146,6 +150,7 @@ body {
     width:100%; padding:10px; border-radius:8px;
     border:2px solid rgba(0,0,0,0.1); background:white;
     font-size:1rem; cursor:pointer; transition:all 0.3s;
+    touch-action: manipulation;
 }
 #ai-difficulty:focus { outline:none; border-color:var(--secondary-color); }
 
@@ -167,6 +172,9 @@ body {
     border-radius: 8px;
     box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 10px 30px rgba(0,0,0,0.3);
     cursor: crosshair; overflow: hidden;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 .board::before {
@@ -188,7 +196,9 @@ body {
 
 /* ── Pieces ── */
 .piece {
-    position: absolute; width: 32px; height: 32px;
+    position: absolute;
+    width: calc(var(--cell-size, 40px) * 0.82);
+    height: calc(var(--cell-size, 40px) * 0.82);
     border-radius: 50%; transform: translate(-50%,-50%);
     cursor: pointer; animation: dropIn 0.3s ease-out; z-index: 10;
     transition: transform 0.15s;
@@ -229,6 +239,9 @@ body {
     padding: 12px 20px; border: none; border-radius: 10px;
     font-size: 1rem; font-weight: 600; cursor: pointer;
     transition: all 0.3s; font-family: 'Noto Sans TC', sans-serif;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 .btn-primary  { background: linear-gradient(135deg,#2c3e50,#34495e); color:white; box-shadow:0 4px 6px rgba(0,0,0,0.2); }
 .btn-secondary{ background: linear-gradient(135deg,#95a5a6,#7f8c8d); color:white; box-shadow:0 4px 6px rgba(0,0,0,0.2); }
@@ -359,8 +372,24 @@ body {
 @media (max-width:900px) {
     .game-area { grid-template-columns:1fr; }
     .info-panel,.controls-panel { order:2; }
-    .board-container { order:1; }
-    .board { width:min(90vw,500px); height:min(90vw,500px); }
+    .board-container { order:1; padding:10px; }
+    .board { width:min(92vw,500px); height:min(92vw,500px); }
+
+    /* Info panel — 橫排 */
+    .info-panel {
+        display:flex; flex-direction:row;
+        flex-wrap:wrap; align-items:center; gap:8px;
+    }
+    .player-card { flex:1; min-width:130px; margin-bottom:0; padding:10px; }
+    .vs-badge { margin:0; }
+    .stats-panel { width:100%; margin:8px 0 0; padding:10px; }
+    .ai-controls { width:100%; margin-top:8px; padding-top:8px; }
+
+    /* Controls — 橫排換行 */
+    .controls-panel { flex-direction:row; flex-wrap:wrap; gap:8px; }
+    .control-group { flex-direction:row; flex:1; min-width:calc(50% - 8px); gap:8px; }
+    .btn { flex:1; padding:10px 8px; font-size:0.88rem; }
+    #ai-status { flex-basis:100%; }
 }
 @media (max-width:600px) {
     .container { padding:10px; }
