@@ -149,11 +149,37 @@ body {
 
 .ai-controls { margin-top:20px; padding-top:20px; border-top:1px solid rgba(0,0,0,0.1); }
 .ai-label { display:block; font-size:0.9rem; font-weight:600; margin-bottom:8px; }
-#ai-difficulty {
-    width:100%; padding:10px; border-radius:8px;
-    border:2px solid rgba(0,0,0,0.1); background:white;
-    font-size:1rem; cursor:pointer; transition:all 0.3s;
+
+/* ── Difficulty segmented control ── */
+.diff-segmented {
+    display: flex;
+    background: rgba(0,0,0,0.06);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 3px;
+}
+html[data-theme="dark"] .diff-segmented { background: rgba(255,255,255,0.08); }
+.diff-seg-btn {
+    flex: 1; padding: 8px 4px;
+    border: none; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 500;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-color);
+    transition: all 0.2s;
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Noto Sans TC', sans-serif;
+}
+.diff-seg-btn.is-active {
+    background: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    color: var(--primary-color);
+    font-weight: 700;
+}
+html[data-theme="dark"] .diff-seg-btn.is-active {
+    background: rgba(255,255,255,0.15);
+    box-shadow: none;
 }
 #ai-difficulty:focus { outline:none; border-color:var(--secondary-color); }
 
@@ -383,14 +409,14 @@ body {
     /* ── Layout ── */
     .game-area {
         grid-template-columns: 1fr;
-        /* safe-area-inset-bottom handles iPhone home bar; 88px covers the button bar itself */
+        /* 88px = button bar; env() handles iPhone home indicator */
         padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
     }
     .info-panel,.controls-panel { order: 2; }
     .board-container { order: 1; padding: 10px; flex-direction: column; align-items: center; }
-    /* cap board by viewport height so the header doesn't get scrolled off-screen.
-       360px = header + turn-banner + info-panel + bottom-bar + spacing (rough total).
-       On typical phones (>=700px tall) the 92vw constraint still wins, gameplay unchanged. */
+    /* Also constrain by viewport height so header never scrolls off.
+       360px ≈ header + banner + info-panel + bar. On phones ≥700px tall
+       the 92vw value still wins so board size is unchanged. */
     .board {
         width:  min(92vw, calc(100dvh - 360px), 500px);
         height: min(92vw, calc(100dvh - 360px), 500px);
@@ -466,16 +492,10 @@ body {
         border-top: 1px solid var(--glass-border);
         box-shadow: 0 -4px 24px var(--shadow-color);
         border-radius: 0;
-        /* total bar height: 8px top + 56px btn + (8px+safe-area) bottom
-           must match game-area padding-bottom above */
     }
+    /* Flatten control-groups so all 4 buttons share the bar equally */
     .control-group {
-        flex: 1;
-        flex-direction: column;
-        min-width: unset;
-        gap: 0;
-        justify-content: center;
-        align-items: center;
+        display: contents;
     }
     .btn {
         flex: 1;

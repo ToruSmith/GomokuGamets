@@ -90,7 +90,6 @@ class GomokuGame {
         this.initWorker();
         this.bindEvents();
         this.resetGame();
-        // 等 layout 完成後再計算格距，確保 clientWidth 正確
         requestAnimationFrame(() => this.initBoard());
     }
 
@@ -214,6 +213,16 @@ class GomokuGame {
         this.themeToggle?.addEventListener('click',   () => this.toggleTheme());
         this.soundToggle?.addEventListener('click',   () => this.toggleSound());
         this.aiDiffSelect?.addEventListener('change', (e) => { this.aiDifficulty = e.target.value; });
+
+        // Segmented difficulty control (replaces <select>)
+        const diffPanel = document.getElementById('ai-difficulty');
+        diffPanel?.querySelectorAll('.diff-seg-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                diffPanel.querySelectorAll('.diff-seg-btn').forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                this.aiDifficulty = btn.dataset.value;
+            });
+        });
 
         // Lobby
         this.createRoomBtn?.addEventListener('click', () => this.createRoom());

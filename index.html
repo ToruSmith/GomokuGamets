@@ -21,6 +21,7 @@
                 <button id="leave-room-btn" class="btn-sm-danger">離開房間</button>
             </div>
             <div class="header-controls">
+                <button id="sound-toggle" class="icon-btn" title="音效開關">🔊</button>
                 <button id="theme-toggle" class="icon-btn" title="切換主題">🌙</button>
             </div>
         </header>
@@ -63,16 +64,20 @@
 
                 <div class="ai-controls" id="ai-controls-panel">
                     <label class="ai-label">AI 難度</label>
-                    <select id="ai-difficulty">
-                        <option value="easy">簡單</option>
-                        <option value="medium" selected>中等</option>
-                        <option value="hard">困難</option>
-                    </select>
+                    <div class="diff-segmented" id="ai-difficulty">
+                        <button class="diff-seg-btn" data-value="easy">簡單</button>
+                        <button class="diff-seg-btn is-active" data-value="medium">中等</button>
+                        <button class="diff-seg-btn" data-value="hard">困難</button>
+                    </div>
                 </div>
             </div>
 
             <!-- 棋盤 -->
             <div class="board-container">
+                <div id="turn-banner" class="turn-banner">
+                    <span class="turn-banner-dot"></span>
+                    <span id="turn-banner-text">⚫ 黑棋輪到你</span>
+                </div>
                 <div id="board" class="board"></div>
             </div>
 
@@ -102,21 +107,15 @@
                         <span class="btn-text">線上對戰</span>
                     </button>
                 </div>
-
-                <div class="control-group">
-                    <button id="sound-toggle" class="btn btn-outline">
-                        <span class="btn-icon">🔊</span>
-                        <span class="btn-text">音效</span>
-                    </button>
-                </div>
-
-                <div id="ai-status" class="ai-status hidden">
-                    <div class="ai-thinking">
-                        <div class="spinner"></div>
-                        <span>AI 思考中...</span>
-                    </div>
-                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- AI 思考 Overlay（position:fixed，獨立於任何容器之外）-->
+    <div id="ai-status" class="ai-status hidden">
+        <div class="ai-thinking">
+            <div class="spinner"></div>
+            <span>AI 思考中...</span>
         </div>
     </div>
 
