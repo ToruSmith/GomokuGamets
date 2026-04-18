@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五子棋 - 極致版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="game-header">
+            <div class="logo">
+                <span class="logo-icon">⚫⚪</span>
+                <h1>五子棋</h1>
+            </div>
+            <div id="online-status" class="online-status hidden">
+                <span class="online-dot"></span>
+                <span id="online-status-text">連線中</span>
+                <span id="room-code-badge" class="room-code-badge"></span>
+                <button id="leave-room-btn" class="btn-sm-danger">離開房間</button>
+            </div>
+            <div class="header-controls">
+                <button id="theme-toggle" class="icon-btn" title="切換主題">🌙</button>
+            </div>
+        </header>
+
+        <div class="game-area">
+            <!-- 左側資訊面板 -->
+            <div class="info-panel">
+                <div class="player-card active" id="player-black">
+                    <div class="player-avatar">⚫</div>
+                    <div class="player-info">
+                        <h3 id="black-name">黑棋</h3>
+                        <span class="player-status" id="black-status">輪到你</span>
+                    </div>
+                </div>
+
+                <div class="vs-badge">VS</div>
+
+                <div class="player-card" id="player-white">
+                    <div class="player-avatar">⚪</div>
+                    <div class="player-info">
+                        <h3 id="white-name">白棋</h3>
+                        <span class="player-status" id="white-status">等待中</span>
+                    </div>
+                </div>
+
+                <div class="stats-panel">
+                    <div class="stat-item">
+                        <span class="stat-label">步數</span>
+                        <span class="stat-value" id="move-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">黑勝</span>
+                        <span class="stat-value" id="black-wins">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">白勝</span>
+                        <span class="stat-value" id="white-wins">0</span>
+                    </div>
+                </div>
+
+                <div class="ai-controls" id="ai-controls-panel">
+                    <label class="ai-label">AI 難度</label>
+                    <select id="ai-difficulty">
+                        <option value="easy">簡單</option>
+                        <option value="medium" selected>中等</option>
+                        <option value="hard">困難</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 棋盤 -->
+            <div class="board-container">
+                <div id="board" class="board"></div>
+            </div>
+
+            <!-- 右側控制面板 -->
+            <div class="controls-panel">
+                <div class="control-group">
+                    <button id="reset-btn" class="btn btn-primary">
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">重新開始</span>
+                    </button>
+                    <button id="undo-btn" class="btn btn-secondary">
+                        <span class="btn-icon">↩️</span>
+                        <span class="btn-text">悔棋</span>
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <button id="ai-btn" class="btn btn-accent">
+                        <span class="btn-icon">🤖</span>
+                        <span class="btn-text">AI 對戰</span>
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <button id="online-btn" class="btn btn-online">
+                        <span class="btn-icon">🌐</span>
+                        <span class="btn-text">線上對戰</span>
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <button id="sound-toggle" class="btn btn-outline">
+                        <span class="btn-icon">🔊</span>
+                        <span class="btn-text">音效</span>
+                    </button>
+                </div>
+
+                <div id="ai-status" class="ai-status hidden">
+                    <div class="ai-thinking">
+                        <div class="spinner"></div>
+                        <span>AI 思考中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遊戲結束彈窗 -->
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content">
+            <div id="modal-message"></div>
+            <div class="modal-footer">
+                <button id="play-again-btn" class="btn btn-primary btn-full">再玩一次</button>
+                <button id="close-modal-btn" class="btn btn-outline btn-full">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 線上對戰 Lobby 彈窗 -->
+    <div id="online-lobby-modal" class="modal">
+        <div class="modal-content lobby-content">
+            <h2 class="lobby-title">🌐 線上對戰</h2>
+
+            <!-- 首頁：建立 / 加入 -->
+            <div id="lobby-home">
+                <button id="create-room-btn" class="btn btn-primary btn-full">
+                    🏠 建立新房間（執黑先手）
+                </button>
+                <div class="lobby-divider"><span>或</span></div>
+                <div class="join-room-group">
+                    <input id="room-code-input" class="room-input" type="text"
+                           placeholder="輸入 6 位房間代碼" maxlength="6" autocomplete="off">
+                    <button id="join-room-btn" class="btn btn-accent">加入</button>
+                </div>
+                <p id="lobby-error" class="lobby-error hidden"></p>
+            </div>
+
+            <!-- 等待對手 -->
+            <div id="lobby-waiting" class="hidden">
+                <div class="room-created-box">
+                    <p class="room-label">你的房間代碼</p>
+                    <div id="display-room-code" class="room-code-display">------</div>
+                    <button id="copy-code-btn" class="btn btn-secondary">📋 複製代碼</button>
+                    <p class="copy-hint">把代碼傳給朋友，讓他輸入後加入</p>
+                </div>
+                <div class="waiting-animation">
+                    <div class="spinner"></div>
+                    <span>等待對手加入...</span>
+                </div>
+            </div>
+
+            <!-- 已加入 -->
+            <div id="lobby-joined" class="hidden">
+                <div class="joined-box">
+                    <div style="font-size:3rem">✅</div>
+                    <p><strong>成功加入房間！</strong></p>
+                    <p>你執白棋，等待遊戲開始...</p>
+                </div>
+            </div>
+
+            <button id="close-lobby-btn" class="btn btn-outline btn-full" style="margin-top:15px">取消</button>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
