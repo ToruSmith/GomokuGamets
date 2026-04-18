@@ -89,8 +89,9 @@ class GomokuGame {
         this.initFirebase();
         this.initWorker();
         this.bindEvents();
-        this.initBoard();
         this.resetGame();
+        // 等 layout 完成後再計算格距，確保 clientWidth 正確
+        requestAnimationFrame(() => this.initBoard());
     }
 
     // ─────────── Firebase ───────────
@@ -756,6 +757,34 @@ class GomokuGame {
 
         if (this.undoBtn) {
             this.undoBtn.disabled = this.moveHistory.length === 0 || this.gameOver || this.aiThinking || this.onlineMode;
+        }
+
+        // ── Turn Banner（手機版棋盤上方提示）──
+        const bannerEl = document.getElementById('turn-banner');
+        const bannerTextEl = document.getElementById('turn-banner-text');
+        if (bannerEl && bannerTextEl) {
+            bannerEl.classList.remove('is-my-turn', 'is-ai-turn');
+            if (this.gameOver) {
+                bannerEl.style.display = 'none';
+            } else {
+                bannerEl.style.display = '';
+                const icon = this.currentPlayer === 'black' ? '⚫' : '⚪';
+                const name = this.currentPlayer === 'black' ? '黑棋' : '白棋';
+                if (this.onlineMode) {
+                    if (this.currentPlayer === this.myColor) {
+                        bannerTextEl.textContent = `${icon} ${name}・輪到你了`;
+                        bannerEl.classList.add('is-my-turn');
+                    } else {
+                        bannerTextEl.textContent = `${icon} ${name}・等待對方...`;
+                    }
+                } else if (this.aiEnabled && this.currentPlayer === this.aiPlayer) {
+                    bannerTextEl.textContent = `${icon} AI 思考中...`;
+                    bannerEl.classList.add('is-ai-turn');
+                } else {
+                    bannerTextEl.textContent = `${icon} ${name}・輪到你了`;
+                    bannerEl.classList.add('is-my-turn');
+                }
+            }
         }
     }
 

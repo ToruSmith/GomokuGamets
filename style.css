@@ -142,7 +142,10 @@ body {
 }
 .stat-item { text-align:center; }
 .stat-label { display:block; font-size:0.75rem; color:var(--text-color); opacity:0.7; margin-bottom:4px; }
-.stat-value { font-size:1.2rem; font-weight:700; color:var(--primary-color); }
+.stat-value { font-size:1.2rem; font-weight:700; color:var(--secondary-color); }
+
+/* Steps counter uses primary color */
+.stat-item:first-child .stat-value { color: var(--primary-color); }
 
 .ai-controls { margin-top:20px; padding-top:20px; border-top:1px solid rgba(0,0,0,0.1); }
 .ai-label { display:block; font-size:0.9rem; font-weight:600; margin-bottom:8px; }
@@ -153,6 +156,11 @@ body {
     touch-action: manipulation;
 }
 #ai-difficulty:focus { outline:none; border-color:var(--secondary-color); }
+
+/* ── Turn Banner (mobile only) ── */
+.turn-banner {
+    display: none;
+}
 
 /* ── Board ── */
 .board-container {
@@ -259,8 +267,10 @@ body {
 /* ── AI Status ── */
 .ai-status {
     position: fixed; top:50%; left:50%; transform: translate(-50%,-50%);
-    background: rgba(0,0,0,0.9); color: white;
-    padding: 20px 40px; border-radius: 15px; z-index: 1000; text-align:center;
+    background: rgba(0,0,0,0.88); color: white;
+    padding: 20px 40px; border-radius: 15px; z-index: 1001; text-align:center;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.1);
 }
 .ai-thinking { display:flex; align-items:center; gap:15px; font-size:1.2rem; }
 .spinner {
@@ -370,31 +380,119 @@ body {
     .board { width:500px; height:500px; }
 }
 @media (max-width:900px) {
-    .game-area { grid-template-columns:1fr; }
-    .info-panel,.controls-panel { order:2; }
-    .board-container { order:1; padding:10px; }
-    .board { width:min(92vw,500px); height:min(92vw,500px); }
-
-    /* Info panel — 橫排 */
-    .info-panel {
-        display:flex; flex-direction:row;
-        flex-wrap:wrap; align-items:center; gap:8px;
+    /* ── Layout ── */
+    .game-area {
+        grid-template-columns: 1fr;
+        padding-bottom: 80px; /* space for fixed bottom bar */
     }
-    .player-card { flex:1; min-width:130px; margin-bottom:0; padding:10px; }
-    .vs-badge { margin:0; }
-    .stats-panel { width:100%; margin:8px 0 0; padding:10px; }
-    .ai-controls { width:100%; margin-top:8px; padding-top:8px; }
+    .info-panel,.controls-panel { order: 2; }
+    .board-container { order: 1; padding: 10px; flex-direction: column; align-items: center; }
+    .board { width: min(92vw,500px); height: min(92vw,500px); }
 
-    /* Controls — 橫排換行 */
-    .controls-panel { flex-direction:row; flex-wrap:wrap; gap:8px; }
-    .control-group { flex-direction:row; flex:1; min-width:calc(50% - 8px); gap:8px; }
-    .btn { flex:1; padding:10px 8px; font-size:0.88rem; }
-    #ai-status { flex-basis:100%; }
+    /* ── Turn Banner ── */
+    .turn-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 8px 16px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        background: rgba(255,255,255,0.75);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.5);
+        color: var(--primary-color);
+        transition: all 0.3s;
+    }
+    .turn-banner.is-my-turn {
+        background: rgba(39,174,96,0.2);
+        border-color: rgba(39,174,96,0.4);
+        color: #1a7a42;
+    }
+    .turn-banner.is-ai-turn {
+        background: rgba(231,76,60,0.1);
+        border-color: rgba(231,76,60,0.2);
+        color: #a93226;
+    }
+    .turn-banner-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        background: var(--secondary-color);
+        animation: pulse 1.2s infinite;
+        flex-shrink: 0;
+    }
+
+    /* ── Info Panel ── */
+    .info-panel {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+    }
+    .player-card {
+        flex: 1; min-width: 130px;
+        margin-bottom: 0; padding: 10px;
+    }
+    .vs-badge { margin: 0; }
+    .stats-panel { width: 100%; margin: 8px 0 0; padding: 10px; }
+    .ai-controls { width: 100%; margin-top: 8px; padding-top: 8px; }
+
+    /* ── Controls Panel → Fixed Bottom Bar ── */
+    .controls-panel {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        z-index: 500;
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        padding: 8px 8px;
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid var(--glass-border);
+        box-shadow: 0 -4px 24px var(--shadow-color);
+        border-radius: 0;
+    }
+    .control-group {
+        flex: 1;
+        flex-direction: column;
+        min-width: unset;
+        gap: 0;
+        justify-content: center;
+        align-items: center;
+    }
+    .btn {
+        flex: 1;
+        width: 100%;
+        flex-direction: column;
+        gap: 2px;
+        padding: 6px 4px;
+        border-radius: 10px;
+        font-size: 0;   /* hide default size, override below */
+        min-height: 56px;
+    }
+    .btn-icon { font-size: 1.4rem; line-height: 1; }
+    .btn-text { font-size: 0.65rem; font-weight: 600; line-height: 1.2; }
+
+    /* Keep hover/active effects but no translateY on mobile */
+    .btn-primary:hover,.btn-secondary:hover,.btn-accent:hover,.btn-online:hover {
+        transform: none;
+        filter: brightness(1.08);
+    }
+    .btn-outline:hover { transform: none; }
 }
 @media (max-width:600px) {
-    .container { padding:10px; }
-    .stats-panel { grid-template-columns:1fr; }
-    .modal-footer { flex-direction:column; }
-    .join-room-group { flex-direction:column; }
-    .logo h1 { font-size:1.5rem; }
+    .container { padding: 10px; }
+    .modal-footer { flex-direction: column; }
+    .join-room-group { flex-direction: column; }
+    .logo h1 { font-size: 1.5rem; }
+    .player-avatar { width: 40px; height: 40px; font-size: 1.2rem; }
+    .player-info h3 { font-size: 0.95rem; }
 }
