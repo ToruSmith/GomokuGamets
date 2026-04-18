@@ -529,31 +529,10 @@ class GomokuGame {
     }
 
     closeLobbyModal() {
-        // 若還在等待/對戰中，取消前必須先清掉所有線上狀態
-        // （否則 onlineMode 殘留會導致棋盤卡住、AI/悔棋失效）
-        if (this.onlineMode || this.roomId) {
-            this._cleanupOnlineState();
-        }
         this.lobbyModal.style.display = 'none';
         this.showLobbySection('home');
         if (this.roomCodeInput) this.roomCodeInput.value = '';
         this.hideLobbyError();
-    }
-
-    // 線上狀態完整清理（關 listener、重置所有 flag、恢復按鈕）
-    _cleanupOnlineState() {
-        if (this.db && this.roomId && this.roomListener) {
-            off(ref(this.db, `rooms/${this.roomId}`));
-            this.roomListener = null;
-        }
-        this.onlineMode  = false;
-        this.roomId      = null;
-        this.myColor     = null;
-        this.lastSyncedMoveCount = 0;
-
-        if (this.aiBtn)    this.aiBtn.disabled    = false;
-        if (this.undoBtn)  this.undoBtn.disabled  = false;
-        if (this.onlineStatusEl) this.onlineStatusEl.classList.add('hidden');
     }
 
     showLobbySection(section) {
@@ -696,7 +675,11 @@ class GomokuGame {
             }
         }
 
-        this.currentPlayer = data.currentPlayer ?? 'black';
+        // 只在對戰進行中（playing）才同步 currentPlayer
+        // 等待中（waiting）不覆蓋本地狀態，否則取消房間後輪次會被重設為 black
+        if (data.status === 'playing') {
+            this.currentPlayer = data.currentPlayer ?? 'black';
+        }
         this.updateUI();
     }
 
@@ -729,7 +712,18 @@ class GomokuGame {
 
     leaveRoom() {
         if (!confirm('確定要離開房間嗎？')) return;
-        this._cleanupOnlineState();
+        if (this.roomListener && this.roomId) {
+            off(ref(this.db, `rooms/${this.roomId}`));
+            this.roomListener = null;
+        }
+        this.onlineMode = false;
+        this.roomId     = null;
+        this.myColor    = null;
+        this.lastSyncedMoveCount = 0;
+
+        if (this.onlineStatusEl) this.onlineStatusEl.classList.add('hidden');
+        if (this.aiBtn) this.aiBtn.disabled = false;
+        if (this.undoBtn) this.undoBtn.disabled = false;
         this.resetGame();
     }
 
