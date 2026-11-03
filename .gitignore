@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-demo/
+test-results/
+playwright-report/
+.firebase/
+*.log
+.DS_Store
+dist-e2e/
