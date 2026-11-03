@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>五子棋</title>
+    <meta
+      name="description"
+      content="可離線遊玩的五子棋：連珠禁手、五段 AI、賽後分析與線上對戰。"
+    />
+    <meta name="theme-color" content="#16203a" />
+    <!--head-links-->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;600&display=swap"
+    />
+    <script>
+      // 在第一次繪製前套用主題，避免閃爍
+      try {
+        var saved = JSON.parse(localStorage.getItem('gomoku.v2.settings') || '{}');
+        if (saved.theme && saved.theme !== 'system') {
+          document.documentElement.dataset.theme = saved.theme;
+        }
+        if (saved.skin) document.documentElement.dataset.skin = saved.skin;
+      } catch (error) {}
+    </script>
+    <!--app-css-->
+  </head>
+  <body>
+    <div id="app"></div>
+    <!--app-js-->
+    <noscript>五子棋需要啟用 JavaScript 才能遊玩。</noscript>
+  </body>
+</html>

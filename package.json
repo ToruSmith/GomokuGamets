@@ -1,0 +1,32 @@
+{
+  "name": "gomoku-games",
+  "version": "2.0.0",
+  "private": true,
+  "description": "五子棋：連珠禁手、強力 AI、賽後分析、線上對戰，可離線遊玩的 PWA。",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node scripts/build.mjs --serve",
+    "build": "node scripts/build.mjs",
+    "build:demo": "node scripts/build.mjs --demo",
+    "preview": "node scripts/build.mjs --preview",
+    "build:e2e": "node scripts/build.mjs --e2e",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
+    "test:e2e": "playwright test",
+    "check": "npm run typecheck && npm run format:check && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.3",
+    "esbuild": "0.28.2",
+    "playwright": "1.63.0",
+    "prettier": "3.8.1",
+    "sharp": "0.35.4",
+    "tsx": "4.23.12",
+    "typescript": "6.0.3"
+  }
+}
