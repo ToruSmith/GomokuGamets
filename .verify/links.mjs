@@ -1,4 +1,0 @@
-const urls = ['https://torusmith.github.io/QiguanGamets/','https://torusmith.github.io/QiguanGamets/styles.css','https://shtoruogigamets.pages.dev/','https://gomokugamets.pages.dev/','https://chesstorusgamets.pages.dev/','https://online-2-player-chinese-chess.onrender.com/','https://online-2-player-chinese-chess.onrender.com/online','https://online-2-player-chinese-chess.onrender.com/puzzles','https://online-2-player-chinese-chess.onrender.com/learn'];
-let bad=0; for (const u of urls){ let s; try{ const r=await fetch(u,{signal:AbortSignal.timeout(90000)}); const t=await r.text(); s=r.status+' '+(t.match(/<title>(.*?)<\/title>/)?.[1]??''); if(!r.ok)bad++; }catch(e){s='ERR '+e.message;bad++} console.log('LINK',u,s); }
-const h=await (await fetch(urls[0])).text(); console.log('LINK hrefs',[...h.matchAll(/<a[^>]+href="([^"]+)"/g)].map(m=>m[1]).join(' '));
-process.exit(bad?1:0);

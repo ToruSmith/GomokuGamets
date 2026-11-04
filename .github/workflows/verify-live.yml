@@ -1,15 +1,16 @@
-name: Verify live links
+name: Verify live browser
 
 on:
   push:
-    branches: [chore/verify-live-rules]
+    branches: [chore/verify-live]
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
-      - run: node .verify/links.mjs
+      - run: mkdir /tmp/v && cp .verify/browser.mjs /tmp/v/ && cd /tmp/v && npm init -y >/dev/null && npm i playwright@1.63.0 && npx playwright install --with-deps chromium && node browser.mjs
