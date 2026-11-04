@@ -24,6 +24,7 @@ export const en: Record<MessageKey, string> = {
   'home.records': 'Games and stats',
   'home.records.hint': 'Replay past games and find the turning point',
   'home.settings': 'Settings',
+  'home.hub': 'All board games',
   'home.help': 'How to play',
   'setup.level': 'Level',
   'setup.side': 'You play',
