@@ -6,6 +6,8 @@ import { icon } from '../icons.ts';
 import { route, startMatch } from '../router.ts';
 import type { Route } from '../router.ts';
 
+const HUB_URL = 'https://torusmith.github.io/QiguanGamets/';
+
 function entry(
   titleKey: MessageKey,
   hint: string,
@@ -78,6 +80,7 @@ export function homeView(): HTMLElement {
         icon('gear'),
         t('home.settings'),
       ),
+      h('a', { class: 'quiet', href: HUB_URL }, t('home.hub')),
     ),
   );
 }

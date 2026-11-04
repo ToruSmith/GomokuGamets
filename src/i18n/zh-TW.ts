@@ -22,6 +22,7 @@ export const zhTW = {
   'home.records': '棋譜與戰績',
   'home.records.hint': '看回過去的對局，找出勝負手',
   'home.settings': '設定',
+  'home.hub': '回手談棋館',
   'home.help': '玩法說明',
   'setup.level': '難度',
   'setup.side': '你執',
