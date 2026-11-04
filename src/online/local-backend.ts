@@ -35,6 +35,13 @@ function writeRoom(code: string, room: RoomData | null): void {
   listeners.forEach((fn) => fn(code));
 }
 
+/** 把伺服器時間佔位值換成現在時間 */
+function resolveTimes(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null) return value;
+  if ('.sv' in value) return Date.now();
+  return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveTimes(v)]));
+}
+
 export class LocalBackend implements RoomBackend {
   private readonly uid =
     sessionStorage.getItem('e2e-uid') ??
@@ -60,7 +67,7 @@ export class LocalBackend implements RoomBackend {
       const last = parts.pop() as string;
       let node = room;
       for (const part of parts) node = (node[part] ??= {}) as Tree;
-      node[last] = value;
+      node[last] = resolveTimes(value);
     }
     writeRoom(code, room as unknown as RoomData);
   }
@@ -74,6 +81,9 @@ export class LocalBackend implements RoomBackend {
   }
   async markPresent(code: string, seat: Seat): Promise<void> {
     await this.update(code, { [`presence/${seat}`]: true });
+  }
+  serverOffset(): number {
+    return 0;
   }
   async remove(code: string): Promise<void> {
     writeRoom(code, null);

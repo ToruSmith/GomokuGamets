@@ -7,11 +7,12 @@ import type { GameConfig } from '../core/game.ts';
 import { PUZZLES } from '../core/puzzle-data.ts';
 import type { MoveRejection, Stone } from '../core/types.ts';
 import { BLACK, WHITE } from '../core/types.ts';
-import { RoomSession } from '../online/session.ts';
+import { RoomSession, clockAt, isFlagged } from '../online/session.ts';
 import type { RoomView } from '../online/session.ts';
 import { roomBackend } from '../online/index.ts';
 import type { Seat } from '../online/types.ts';
 import { stoneOf } from '../online/types.ts';
+import type { RoomConfig } from '../online/types.ts';
 import { playLose, playNudge, playStone, playWin } from '../platform/sound.ts';
 import { erase, load, save } from '../platform/storage.ts';
 import { addGameLog, markPuzzleSolved } from './records.ts';
@@ -377,6 +378,8 @@ export class OnlineMatch extends Match {
   private movesSeen = 0;
   private loggedRoom = '';
   private seenReactionAt = Date.now();
+  readonly clocks = signal<Record<Stone, number> | null>(null);
+  private clockTimer: ReturnType<typeof setInterval> | null = null;
 
   private async connect(): Promise<RoomSession> {
     const backend = await roomBackend();
@@ -384,7 +387,7 @@ export class OnlineMatch extends Match {
     return this.session;
   }
 
-  async create(config: GameConfig, name: string, seat: Seat): Promise<string> {
+  async create(config: RoomConfig, name: string, seat: Seat): Promise<string> {
     const session = await this.connect();
     return session.create(config, name, seat);
   }
@@ -404,11 +407,31 @@ export class OnlineMatch extends Match {
     else if (view.game.moves.length === 1 && previous === 0) stoneSound();
     this.watchReactions(view);
     this.changed();
-    const result = view.game.result;
-    if (result && this.loggedRoom !== view.code) {
+    this.settle(view);
+    this.tickClock();
+    if (view.clock && !this.clockTimer) {
+      this.clockTimer = setInterval(() => this.tickClock(), 250);
+    }
+  }
+
+  private settle(view: RoomView): void {
+    if (view.game.result && this.loggedRoom !== view.code) {
       this.loggedRoom = view.code;
       if (view.seat) this.logResult(view);
     }
+  }
+
+  /** 雙方從同一份時間戳算，超時的結論一致 */
+  private tickClock(): void {
+    const view = this.view.peek();
+    if (!view || !this.session) return;
+    const now = this.session.serverNow();
+    if (isFlagged(view, now)) {
+      view.game.conclude(view.game.turn, 'timeout');
+      this.changed();
+      this.settle(view);
+    }
+    this.clocks.value = clockAt(view, now);
   }
 
   private watchReactions(view: RoomView): void {
@@ -474,6 +497,7 @@ export class OnlineMatch extends Match {
   }
 
   override dispose(): void {
+    if (this.clockTimer) clearInterval(this.clockTimer);
     void this.session?.leave();
   }
 }

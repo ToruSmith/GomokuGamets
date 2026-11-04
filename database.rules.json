@@ -18,6 +18,9 @@
           "rule": {
             ".validate": "newData.val() === 'freestyle' || newData.val() === 'standard' || newData.val() === 'renju'"
           },
+          "clockMs": {
+            ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 3600000"
+          },
           "$other": { ".validate": false }
         },
         "players": {
@@ -38,8 +41,9 @@
         "moves": {
           "$key": {
             ".write": "auth != null && !data.exists() && !data.parent().parent().child('resigned').exists() && data.parent().parent().child('players/black').exists() && data.parent().parent().child('players/white').exists() && (data.parent().parent().child('n').val() % 2 === 0 ? data.parent().parent().child('players/black/uid').val() : data.parent().parent().child('players/white/uid').val()) === auth.uid",
-            ".validate": "newData.hasChildren(['i', 'c']) && newData.child('i').val() === data.parent().parent().child('n').val() && newData.parent().parent().child('n').val() === data.parent().parent().child('n').val() + 1",
+            ".validate": "newData.hasChildren(['i', 'c']) && (newData.child('t').exists() || !data.parent().parent().child('config/clockMs').exists()) && newData.child('i').val() === data.parent().parent().child('n').val() && newData.parent().parent().child('n').val() === data.parent().parent().child('n').val() + 1",
             "i": { ".validate": "newData.isNumber()" },
+            "t": { ".validate": "newData.val() === now" },
             "c": {
               ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < data.parent().parent().parent().child('config/size').val() * data.parent().parent().parent().child('config/size').val()"
             },

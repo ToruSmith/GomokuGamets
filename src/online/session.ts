@@ -1,8 +1,8 @@
 import { Game } from '../core/game.ts';
-import type { GameConfig } from '../core/game.ts';
-import { stoneAtPly } from '../core/types.ts';
-import type { RoomBackend, RoomData, RoomMove, Seat } from './types.ts';
-import { otherSeat, seatOf, stoneOf } from './types.ts';
+import type { Stone } from '../core/types.ts';
+import { BLACK, WHITE, stoneAtPly } from '../core/types.ts';
+import type { RoomBackend, RoomConfig, RoomData, RoomMove, Seat } from './types.ts';
+import { SERVER_TIME, otherSeat, seatOf, stoneOf } from './types.ts';
 
 /** 排除 0/O、1/I 這些在聊天軟體裡容易看錯的字元。 */
 const ROOM_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -24,12 +24,24 @@ function sortedMoves(room: RoomData): RoomMove[] {
   return entries.sort((a, b) => a.i - b.i);
 }
 
+/** 限時對局的時鐘：黑棋第一手不計時，之後用伺服器時間戳算出每手耗時。 */
+export interface RoomClock {
+  left: Record<Stone, number>;
+  /** 上一手的時間戳，也就是目前這一手開始計時的時間 */
+  since: number | null;
+}
+
 /**
  * 從房間資料重演整盤棋。任何客戶端在任何時刻（包含重新整理、斷線重連）
- * 都能得到同一個結果。竄改出來的不合法棋步直接判該方負。
+ * 都能得到同一個結果。竄改出來的不合法棋步直接判該方負；
+ * 時間戳顯示超時的那一手不算，判超時負。
  */
-export function replayRoom(room: RoomData): Game {
+function replay(room: RoomData): { game: Game; clock: RoomClock | null } {
   const game = new Game(room.config);
+  const limit = room.config.clockMs;
+  const clock: RoomClock | null = limit
+    ? { left: { [BLACK]: limit, [WHITE]: limit }, since: null }
+    : null;
   // 手數跳號（有人只加 n 不落子）或資料缺口時，
   // 該手的棋手判負；規則無法檢查 key，所以在這裡補上
   const moves = sortedMoves(room);
@@ -38,16 +50,27 @@ export function replayRoom(room: RoomData): Game {
     if (game.result) break;
     const mover = game.turn;
     const move = moves[ply];
+    if (clock && move?.t !== undefined) {
+      if (clock.since !== null) clock.left[mover] -= Math.max(0, move.t - clock.since);
+      if (clock.left[mover] < 0) {
+        clock.left[mover] = 0;
+        game.conclude(mover, 'timeout');
+        break;
+      }
+    }
     if (move?.i !== ply || game.play(move.c)) {
       game.conclude(mover, 'resign');
       break;
     }
+    if (clock && move.t !== undefined) clock.since = move.t;
   }
   for (const seat of ['black', 'white'] as const) {
     if (room.resigned?.[seat]) game.conclude(stoneOf(seat), 'resign');
   }
-  return game;
+  return { game, clock };
 }
+
+export const replayRoom = (room: RoomData): Game => replay(room).game;
 
 export type JoinError = 'not-found' | 'unavailable';
 
@@ -55,11 +78,30 @@ export interface RoomView {
   code: string;
   room: RoomData;
   game: Game;
+  /** 不限時為 null */
+  clock: RoomClock | null;
   /** 我的座位；觀戰者為 null */
   seat: Seat | null;
   opponentOnline: boolean;
   opponentJoined: boolean;
   myTurn: boolean;
+}
+
+/** 雙方此刻的剩餘時間；走子方扣掉這一手已經用掉的時間 */
+export function clockAt(view: RoomView, serverNow: number): Record<Stone, number> | null {
+  if (!view.clock) return null;
+  const left = { ...view.clock.left };
+  if (!view.game.result && view.clock.since !== null) {
+    const stone = view.game.turn;
+    left[stone] = Math.max(0, left[stone] - (serverNow - view.clock.since));
+  }
+  return left;
+}
+
+/** 走子方此刻是否已經超時（以伺服器時間計） */
+export function isFlagged(view: RoomView, serverNow: number): boolean {
+  if (!view.clock || view.clock.since === null || view.game.result) return false;
+  return view.clock.left[view.game.turn] - (serverNow - view.clock.since) < 0;
 }
 
 /** 一場線上對局的完整生命週期，與 UI 無關。 */
@@ -81,7 +123,11 @@ export class RoomSession {
   }
 
   /** 開房。yourSeat 決定房主執黑或執白。 */
-  async create(config: GameConfig, name: string, yourSeat: Seat): Promise<string> {
+  serverNow(): number {
+    return Date.now() + this.backend.serverOffset();
+  }
+
+  async create(config: RoomConfig, name: string, yourSeat: Seat): Promise<string> {
     this.uid = await this.backend.signIn();
     void this.backend.sweepStale().catch(() => undefined);
     let code = generateRoomCode();
@@ -136,12 +182,13 @@ export class RoomSession {
       this.onView(null, true);
       return;
     }
-    const game = replayRoom(room);
+    const { game, clock } = replay(room);
     const opponent = seat ? otherSeat(seat) : null;
     this.current = {
       code,
       room,
       game,
+      clock,
       seat,
       opponentJoined: opponent ? Boolean(room.players[opponent]) : true,
       opponentOnline: opponent ? room.presence?.[opponent] !== false : true,
@@ -158,9 +205,11 @@ export class RoomSession {
   async play(cell: number): Promise<void> {
     const view = this.current;
     if (!view?.myTurn || view.game.rejectionOf(cell)) return;
+    if (isFlagged(view, this.serverNow())) return;
     const index = view.game.moves.length;
+    const stamp = view.clock ? { t: SERVER_TIME } : {};
     await this.backend.update(view.code, {
-      [`moves/${index}`]: { i: index, c: cell },
+      [`moves/${index}`]: { i: index, c: cell, ...stamp },
       n: index + 1,
     });
   }

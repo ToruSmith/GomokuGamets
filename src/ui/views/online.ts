@@ -24,6 +24,7 @@ export function onlineView(): HTMLElement {
   const rule = signal<RuleSet>('freestyle');
   const size = signal<BoardSize>(15);
   const seat = signal<Seat | 'random'>('black');
+  const minutes = signal(0);
   const code = signal('');
   const error = signal('');
   const busy = signal(false);
@@ -34,7 +35,11 @@ export function onlineView(): HTMLElement {
     const room = new OnlineMatch();
     const pick = seat.peek();
     const yourSeat: Seat = pick === 'random' ? (Math.random() < 0.5 ? 'black' : 'white') : pick;
-    const config = { rule: rule.peek(), size: rule.peek() === 'renju' ? 15 : size.peek() } as const;
+    const config = {
+      rule: rule.peek(),
+      size: rule.peek() === 'renju' ? 15 : size.peek(),
+      ...(minutes.peek() ? { clockMs: minutes.peek() * 60_000 } : {}),
+    };
     try {
       const created = await room.create(config, displayName(), yourSeat);
       setHash(`/r/${created}`);
@@ -124,6 +129,17 @@ export function onlineView(): HTMLElement {
                   size.value = value;
                 },
               ),
+        segmented<number>(
+          t('setup.clock'),
+          [0, 5, 10].map((value) => ({
+            value,
+            label: value ? t('setup.clock.minutes', { n: value }) : t('setup.clock.none'),
+          })),
+          () => minutes.value,
+          (value) => {
+            minutes.value = value;
+          },
+        ),
         segmented<Seat | 'random'>(
           t('online.seat'),
           [

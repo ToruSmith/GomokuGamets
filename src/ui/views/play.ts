@@ -58,7 +58,7 @@ function playerRow(match: Match, stone: Stone): HTMLElement {
       match.revision.value;
       return nameOf(match, stone);
     }),
-    match instanceof PlayMatch
+    match instanceof PlayMatch || match instanceof OnlineMatch
       ? () => {
           const clocks = match.clocks.value;
           return clocks

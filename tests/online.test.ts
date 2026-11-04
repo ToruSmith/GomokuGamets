@@ -3,7 +3,9 @@ import { beforeEach, describe, it } from 'node:test';
 import { Game } from '../src/core/game.ts';
 import { BLACK, WHITE } from '../src/core/types.ts';
 import {
+  clockAt,
   generateRoomCode,
+  isFlagged,
   normaliseRoomCode,
   replayRoom,
   ROOM_CODE_PATTERN,
@@ -39,6 +41,70 @@ async function startedRoom(db: RulesDb) {
   await tick();
   return { alice, bob, code };
 }
+
+describe('線上棋鐘', () => {
+  const TIMED = { ...CONFIG, clockMs: 60_000 };
+
+  async function timedRoom() {
+    const db = new RulesDb();
+    const alice = client(db, 'alice');
+    const bob = client(db, 'bob');
+    const code = await alice.session.create(TIMED, '小明', 'black');
+    await bob.session.join(code, '小華');
+    await tick();
+    return { db, alice, bob, code };
+  }
+
+  it('第一手不計時，之後依伺服器時間戳扣時', async () => {
+    const { db, alice, bob } = await timedRoom();
+    db.offset += 30_000;
+    await alice.session.play(112);
+    await tick();
+    db.offset += 20_000;
+    await bob.session.play(113);
+    await tick();
+    const left = alice.view()?.clock?.left;
+    assert.equal(left?.[BLACK], 60_000);
+    assert.ok(Math.abs((left?.[WHITE] ?? 0) - 40_000) < 200, String(left?.[WHITE]));
+  });
+
+  it('超時後的棋步不算，判超時負', async () => {
+    const { db, alice, bob, code } = await timedRoom();
+    await alice.session.play(112);
+    await tick();
+    db.offset += 61_000;
+    const view = bob.view() as RoomView;
+    assert.equal(isFlagged(view, bob.session.serverNow()), true);
+    assert.equal(clockAt(view, bob.session.serverNow())?.[WHITE], 0);
+    await new RulesBackend(db, 'bob').update(code, {
+      'moves/1': { i: 1, c: 113, t: { '.sv': 'timestamp' } },
+      n: 2,
+    });
+    await tick();
+    const game = replayRoom(db.read(`rooms/${code}`) as RoomData);
+    assert.equal(game.moves.length, 1);
+    assert.equal(game.result?.reason, 'timeout');
+    assert.equal(game.result?.winner, BLACK);
+  });
+
+  it('限時對局的棋步一定要帶伺服器時間，不限時的不帶也可以', async () => {
+    const { db, code } = await timedRoom();
+    const backend = new RulesBackend(db, 'alice');
+    await assert.rejects(
+      backend.update(code, { 'moves/0': { i: 0, c: 112 }, n: 1 }),
+      PermissionDenied,
+    );
+    await assert.rejects(
+      backend.update(code, { 'moves/0': { i: 0, c: 112, t: 1 }, n: 1 }),
+      PermissionDenied,
+    );
+    const free = new RulesDb();
+    const { alice } = await startedRoom(free);
+    await alice.session.play(112);
+    await tick();
+    assert.equal(alice.view()?.game.moves.length, 1);
+  });
+});
 
 describe('房間代碼', () => {
   it('產生的代碼永遠合法且沒有易混淆字元', () => {
