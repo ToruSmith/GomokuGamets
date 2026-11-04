@@ -1,0 +1,15 @@
+name: Verify live links
+
+on:
+  push:
+    branches: [chore/verify-live-rules]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - run: node .verify/links.mjs
