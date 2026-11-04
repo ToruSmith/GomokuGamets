@@ -4,7 +4,7 @@
 
 一款裝得進手機、斷網也能玩的五子棋。有認真的 AI、連珠禁手、賽後分析，也能開房間和朋友線上對戰。
 
-**[立即開始下棋](https://torusmith.github.io/GomokuGamets/)**
+**[立即開始下棋](https://gomokugamets.pages.dev/)**
 
 ![首頁：棋盤緩慢重播一局棋，右側是模式選單](docs/screenshots/home.webp)
 
@@ -69,12 +69,13 @@ npm run dev        # http://localhost:5173
 
 ## 部署
 
-### GitHub Pages
+### Cloudflare Pages
 
-1. 倉庫的 **Settings → Pages → Source** 選 **GitHub Actions**
-2. 推送到 `main`，`.github/workflows/deploy.yml` 會自動測試、建置並部署
+1. 在 Cloudflare Pages 連接這個儲存庫，正式版分支選 `main`
+2. 建置指令填 `npm run build`，輸出目錄填 `dist`
+3. 推送到 `main` 會更新正式網址，其他分支會產生預覽網址
 
-所有資源都用相對路徑，放在子路徑（例如 `/GomokuGamets/`）或自訂網域都能運作。
+所有資源都用相對路徑，放在子路徑或自訂網域都能運作。
 
 ### Firebase（線上對戰）
 
@@ -96,7 +97,7 @@ firebase deploy --only database
 1. 在 [Firebase Console](https://console.firebase.google.com/) 建立專案
 2. 建立 Realtime Database，區域選 `asia-southeast1`（離台灣最近）
 3. 在 Authentication 啟用**匿名**登入
-4. 在 Authentication → Settings → 已授權的網域，加入 `你的帳號.github.io`
+4. 在 Authentication → Settings → 已授權的網域，加入 `你的專案.pages.dev`
 5. 把網頁應用程式的設定貼到 `src/online/firebase-config.ts`，並修改 `.firebaserc` 的專案 ID
 6. 執行上面的部署指令
 

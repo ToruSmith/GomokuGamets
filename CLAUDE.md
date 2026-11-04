@@ -54,7 +54,7 @@ ui/  ──▶  state/  ──▶  core/
 
 ## 部署
 
-推送到 `main` 由 `.github/workflows/deploy.yml` 部署到 GitHub Pages（Settings → Pages → Source 要選 GitHub Actions）。
+推送到 `main` 由 Cloudflare Pages 建置（`npm run build`，輸出 `dist`），其他分支產生預覽網址。
 所有資源都用相對路徑，部署在子路徑或自訂網域都能運作。Service Worker 的快取名稱以 `gomoku-` 開頭，清快取時只能動自己的前綴。
 
 ## 密鑰
