@@ -214,6 +214,11 @@ describe('安全規則擋下的作弊', () => {
     );
   });
 
+  it('雙方都入座後，棋手也不能刪房', () => {
+    denied(() => db.write({ [`rooms/${code}`]: null }, { uid: 'alice' }));
+    denied(() => db.write({ [`rooms/${code}`]: null }, { uid: 'bob' }));
+  });
+
   it('超過一天的房間任何登入者都能清除', () => {
     const tree = db.tree as { rooms: Record<string, RoomData> };
     (tree.rooms[code] as RoomData).createdAt = Date.now() - 25 * 60 * 60 * 1000;
