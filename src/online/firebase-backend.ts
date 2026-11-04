@@ -36,6 +36,7 @@ export class FirebaseBackend implements RoomBackend {
   private sdk: DatabaseSdk | null = null;
   private db: unknown = null;
   private uid: string | null = null;
+  private offset = 0;
 
   async signIn(): Promise<string> {
     if (this.uid) return this.uid;
@@ -52,6 +53,9 @@ export class FirebaseBackend implements RoomBackend {
     this.db = sdk.getDatabase(app);
     const credential = await signInAnonymously(getAuth(app));
     this.uid = credential.user.uid;
+    sdk.onValue(sdk.ref(this.db, '.info/serverTimeOffset'), (snapshot) => {
+      this.offset = Number(snapshot.val()) || 0;
+    });
     return this.uid;
   }
 
@@ -63,6 +67,10 @@ export class FirebaseBackend implements RoomBackend {
   private get api(): DatabaseSdk {
     if (!this.sdk) throw new Error('尚未登入');
     return this.sdk;
+  }
+
+  serverOffset(): number {
+    return this.offset;
   }
 
   async read(code: string): Promise<RoomData | null> {

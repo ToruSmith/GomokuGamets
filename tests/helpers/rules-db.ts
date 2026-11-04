@@ -146,13 +146,16 @@ export class RulesDb {
   private readonly listeners = new Map<string, Set<() => void>>();
   /** 每筆被拒絕的寫入，方便測試斷言 */
   denied: string[] = [];
+  /** 測試用：把伺服器時鐘往前撥 */
+  offset = 0;
+  private now = Date.now();
 
   private canWrite(path: string[], newTree: Json, auth: Scope['auth']): boolean {
     const vars: Record<string, string> = {};
     let rules: Rules | null = this.rules;
     const scope = (at: string[]): Scope => ({
       auth,
-      now: Date.now(),
+      now: this.now,
       data: this.tree,
       newData: newTree,
       path: at,
@@ -180,7 +183,7 @@ export class RulesDb {
       const rule = rules['.validate'];
       const scope: Scope = {
         auth,
-        now: Date.now(),
+        now: this.now,
         data: this.tree,
         newData: newTree,
         path: at,
@@ -206,10 +209,16 @@ export class RulesDb {
 
   /** 多路徑寫入：全部通過才一起生效。 */
   write(patch: Record<string, Json>, auth: Scope['auth']): void {
+    this.now = Date.now() + this.offset;
+    const stamp = (value: Json): Json => {
+      if (value === null || typeof value !== 'object') return value;
+      if ('.sv' in (value as Tree)) return this.now;
+      return Object.fromEntries(Object.entries(value as Tree).map(([k, v]) => [k, stamp(v)]));
+    };
     let next = this.tree;
     const paths = Object.keys(patch).map((key) => key.split('/').filter(Boolean));
     for (const [key, value] of Object.entries(patch)) {
-      next = setPath(next, key.split('/').filter(Boolean), value);
+      next = setPath(next, key.split('/').filter(Boolean), stamp(value));
     }
     for (const path of paths) {
       if (!this.canWrite(path, next, auth) || !this.validates(path, next, auth)) {
@@ -270,4 +279,7 @@ export class RulesBackend implements RoomBackend {
     this.db.write({ [`rooms/${code}`]: null }, this.auth);
   }
   async sweepStale() {}
+  serverOffset() {
+    return this.db.offset;
+  }
 }

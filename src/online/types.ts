@@ -7,6 +7,14 @@ export const seatOf = (stone: Stone): Seat => (stone === 1 ? 'black' : 'white');
 export const stoneOf = (seat: Seat): Stone => (seat === 'black' ? 1 : 2);
 export const otherSeat = (seat: Seat): Seat => (seat === 'black' ? 'white' : 'black');
 
+/** Realtime Database 的伺服器時間佔位值 */
+export const SERVER_TIME = { '.sv': 'timestamp' } as const;
+
+export interface RoomConfig extends GameConfig {
+  /** 每方的時間（毫秒）；沒有這個欄位就是不限時 */
+  clockMs?: number;
+}
+
 export interface RoomPlayer {
   uid: string;
   name: string;
@@ -17,6 +25,8 @@ export interface RoomMove {
   i: number;
   /** 棋盤格索引 */
   c: number;
+  /** 伺服器時間戳，只有限時對局才有 */
+  t?: number;
 }
 
 /**
@@ -26,7 +36,7 @@ export interface RoomMove {
  */
 export interface RoomData {
   createdAt: number;
-  config: GameConfig;
+  config: RoomConfig;
   n: number;
   players: Partial<Record<Seat, RoomPlayer>>;
   moves?: Record<string, RoomMove> | (RoomMove | null)[];
@@ -50,4 +60,6 @@ export interface RoomBackend {
   remove(code: string): Promise<void>;
   /** 順手清掉過期房間，失敗不影響遊戲 */
   sweepStale(): Promise<void>;
+  /** 伺服器時間減本機時間 */
+  serverOffset(): number;
 }
