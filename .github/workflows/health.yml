@@ -12,7 +12,7 @@ on:
         description: 要檢查的網址（留空是正式網址）
         required: false
   push:
-    paths: ['.github/workflows/health.yml', 'scripts/smoke.mjs']
+    paths: ['package-lock.json', '.github/workflows/health.yml', 'scripts/smoke.mjs']
 
 permissions:
   contents: read
