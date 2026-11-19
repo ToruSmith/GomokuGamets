@@ -1,7 +1,7 @@
 // 部署後驗收：node scripts/smoke.mjs <網址> [--online]
 //
 // 不加參數只讀取網站；加上 --online 會真的匿名登入 Firebase、開一間房間再離開（離開時房間會被刪除）。
-// 每週的巡檢（.github/workflows/health.yml）也跑這支腳本。
+// 每月的巡檢（.github/workflows/health.yml）也跑這支腳本。
 import { chromium } from 'playwright';
 
 const args = process.argv.slice(2);

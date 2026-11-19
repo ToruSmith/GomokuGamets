@@ -175,7 +175,7 @@ PWA 會先用快取，新版在下一次開啟時生效。關掉分頁再開一�
 
 ## 維護
 
-- **每週巡檢**：`.github/workflows/health.yml` 每週一檢查正式網站、實際開一間線上房間，並檢查相依套件的安全公告；
+- **每月巡檢**：`.github/workflows/health.yml` 每月 1 日檢查正式網站、實際開一間線上房間，並檢查相依套件的安全公告；
   失敗時 GitHub 會寄信通知。也可以在 Actions 頁面手動執行。
 - **部署後驗收**：`npm run smoke -- https://gomokugamets.pages.dev --online`（需要 `npx playwright install chromium`）。
 - **給 AI 工程師**：規則寫在 [AGENTS.md](AGENTS.md)。安全設計與回報方式見 [SECURITY.md](SECURITY.md)。

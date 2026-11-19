@@ -37,7 +37,7 @@ TypeScript（strict）、沒有前端框架（`state/signal.ts` + `ui/dom.ts`）
 | `npm run format`                     | Prettier 排版，不手動調整                                           |
 
 改完程式後 `npm run check` 與 `npm run test:e2e` 都要通過。CI（`.github/workflows/ci.yml`）在每次推送都會跑；
-`health.yml` 每週檢查正式網站、線上開房與安全公告。
+`health.yml` 每月檢查正式網站、線上開房與安全公告。
 
 ## 分層
 

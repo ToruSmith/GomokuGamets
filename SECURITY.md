@@ -24,7 +24,7 @@
 | 被其他網站嵌入（點擊劫持） | `public/_headers` 的 `frame-ancestors 'self'`                               |
 
 `tests/online.test.ts` 用 `tests/helpers/rules-db.ts` 載入真的規則檔，每一次寫入都經過規則求值，
-包含十多種作弊情境。每週的巡檢（`.github/workflows/health.yml`）會實際在正式網站開房，並檢查相依套件的安全公告。
+包含十多種作弊情境。每月的巡檢（`.github/workflows/health.yml`）會實際在正式網站開房，並檢查相依套件的安全公告。
 
 ## 已知限制
 
