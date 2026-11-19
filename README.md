@@ -4,7 +4,7 @@
 
 一款裝得進手機、斷網也能玩的五子棋。有認真的 AI、連珠禁手、賽後分析，也能開房間和朋友線上對戰。
 
-**[立即開始下棋](https://gomokugamets.pages.dev/)**
+**[立即開始下棋](https://gomokugamets.pages.dev/)**　·　[玩家指南](docs/player-guide.md)　·　[更新紀錄](CHANGELOG.md)
 
 ![首頁：棋盤緩慢重播一局棋，右側是模式選單](docs/screenshots/home.webp)
 
@@ -82,16 +82,18 @@ npm run dev        # http://localhost:5173
 
 不需要線上對戰的話可以略過，其他功能都不依賴 Firebase。
 
-**沿用現有專案**：`src/online/firebase-config.ts` 已經填好 `gomokugamets-6c274`，只要部署新的安全規則：
+**沿用現有專案**：`src/online/firebase-config.ts` 已經填好 `gomokugamets-6c274`。
 
-```bash
-npm install -g firebase-tools
-firebase login
-firebase deploy --only database
-```
+#### 發布資料庫規則
 
-> [!IMPORTANT]
-> 這一步一定要做。舊版規則讓任何登入者都能改別人的棋局，新版規則才有實際的保護。
+`database.rules.json` 改過之後，要發布到 Firebase 才會生效（推送到 GitHub 不會自動更新規則）：
+
+1. 打開 [Firebase Console](https://console.firebase.google.com/) → 專案 `gomokugamets-6c274` → **Realtime Database** → **規則**分頁。
+2. 把編輯器裡的內容全部刪掉，貼上這個儲存庫 `database.rules.json` 的完整內容。
+3. 按「**發布**」。
+
+如果規則和程式一起改，先合併 PR、等 Cloudflare Pages 部署完成，再發布規則，避免舊版程式被新規則擋下。
+也可以用指令發布：`npx firebase-tools deploy --only database`（需要先 `firebase login`）。
 
 **使用新專案**：
 
@@ -160,6 +162,8 @@ docs/          架構說明與截圖
 
 ## 常見問題
 
+玩家會遇到的問題整理在[玩家指南](docs/player-guide.md#常見問題)，這裡是部署相關的問題。
+
 **線上對戰顯示連不上伺服器？**
 確認匿名登入已啟用、網站網域已加入已授權的網域，並且部署過安全規則。
 
@@ -169,4 +173,15 @@ PWA 會先用快取，新版在下一次開啟時生效。關掉分頁再開一�
 **舊版的戰績會保留嗎？**
 舊版的戰績本來就沒有存檔，重新整理就會歸零，所以沒有資料要轉移。
 
+## 維護
+
+- **每週巡檢**：`.github/workflows/health.yml` 每週一檢查正式網站、實際開一間線上房間，並檢查相依套件的安全公告；
+  失敗時 GitHub 會寄信通知。也可以在 Actions 頁面手動執行。
+- **部署後驗收**：`npm run smoke -- https://gomokugamets.pages.dev --online`（需要 `npx playwright install chromium`）。
+- **給 AI 工程師**：規則寫在 [AGENTS.md](AGENTS.md)。安全設計與回報方式見 [SECURITY.md](SECURITY.md)。
+
 更新內容請見 [CHANGELOG](CHANGELOG.md)。
+
+## 授權
+
+程式碼沒有採用開源授權，著作權由作者保留。

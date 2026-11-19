@@ -47,11 +47,14 @@ export interface RoomData {
   next?: string;
 }
 
+/** 開房時寫入的資料：createdAt 一律用伺服器時間，規則會檢查 */
+export type NewRoom = Omit<RoomData, 'createdAt'> & { createdAt: typeof SERVER_TIME };
+
 /** 線上對戰需要的後端能力。正式環境是 Firebase，測試用記憶體版。 */
 export interface RoomBackend {
   signIn(): Promise<string>;
   read(code: string): Promise<RoomData | null>;
-  create(code: string, room: RoomData): Promise<void>;
+  create(code: string, room: NewRoom): Promise<void>;
   /** 多路徑原子更新，路徑相對於房間 */
   update(code: string, patch: Record<string, unknown>): Promise<void>;
   watch(code: string, listener: (room: RoomData | null) => void): () => void;

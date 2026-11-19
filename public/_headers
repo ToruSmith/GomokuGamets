@@ -1,0 +1,17 @@
+# Cloudflare Pages 回應標頭（建置時由 scripts/build.mjs 複製到 dist/）
+# Service Worker 與頁面每次都要向伺服器確認，部署新版後才會被拿到
+/sw.js
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache
+# 檔名帶雜湊，內容永遠不變
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+# 所有回應：禁止被其他網站嵌入、不猜測檔案類型、不開放用不到的裝置權限
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: frame-ancestors 'self'; base-uri 'self'; object-src 'none'
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()

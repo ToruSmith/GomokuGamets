@@ -1,4 +1,4 @@
-import type { RoomBackend, RoomData, Seat } from './types.ts';
+import type { NewRoom, RoomBackend, RoomData, Seat } from './types.ts';
 
 /**
  * 只存在於端對端測試版本（--e2e）：用 localStorage 與 BroadcastChannel
@@ -57,8 +57,8 @@ export class LocalBackend implements RoomBackend {
   async read(code: string): Promise<RoomData | null> {
     return readRoom(code);
   }
-  async create(code: string, room: RoomData): Promise<void> {
-    writeRoom(code, room);
+  async create(code: string, room: NewRoom): Promise<void> {
+    writeRoom(code, resolveTimes(room) as RoomData);
   }
   async update(code: string, patch: Record<string, unknown>): Promise<void> {
     const room = readRoom(code) as unknown as Tree;
