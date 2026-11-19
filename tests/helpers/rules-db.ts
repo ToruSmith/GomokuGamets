@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import type { RoomBackend, RoomData, Seat } from '../../src/online/types.ts';
+import type { NewRoom, RoomBackend, RoomData, Seat } from '../../src/online/types.ts';
 
 /**
  * 記憶體版 Realtime Database：真的載入 database.rules.json 逐條執行。
@@ -257,7 +257,7 @@ export class RulesBackend implements RoomBackend {
   async read(code: string) {
     return this.db.read(`rooms/${code}`) as RoomData | null;
   }
-  async create(code: string, room: RoomData) {
+  async create(code: string, room: NewRoom) {
     this.db.write({ [`rooms/${code}`]: room }, this.auth);
   }
   async update(code: string, patch: Record<string, unknown>) {

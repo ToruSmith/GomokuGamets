@@ -1,0 +1,64 @@
+name: Health
+
+# 每週巡檢：正式網站還活著、線上對戰能開房、相依套件沒有高風險的安全公告。
+# 失敗時 GitHub 會寄信通知儲存庫擁有者。也可以在 Actions 頁面手動執行（Run workflow）。
+# 注意：儲存庫 60 天沒有任何提交時，GitHub 會自動停用排程，到 Actions 頁面按「Enable workflow」即可恢復。
+on:
+  schedule:
+    - cron: '17 1 * * 1' # 每週一 09:17（台灣時間）
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 要檢查的網址（留空是正式網址）
+        required: false
+  push:
+    paths: ['package-lock.json', '.github/workflows/health.yml', 'scripts/smoke.mjs']
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: 決定要檢查的網址
+        id: site
+        env:
+          INPUT_URL: ${{ inputs.url }}
+          BRANCH: ${{ github.ref_name }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          url="https://gomokugamets.pages.dev/"
+          if [ -n "$INPUT_URL" ]; then
+            url="$INPUT_URL"
+          elif [ "$EVENT" = "push" ] && [ "$BRANCH" != "main" ]; then
+            # 其他分支檢查 Cloudflare Pages 的預覽網址
+            slug=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+            url="https://${slug}.gomokugamets.pages.dev/"
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "檢查 $url"
+      - name: 等網站部署好
+        env:
+          URL: ${{ steps.site.outputs.url }}
+        run: |
+          for i in $(seq 1 40); do
+            if curl -fsS -o /dev/null "$URL"; then exit 0; fi
+            sleep 15
+          done
+          echo "等了十分鐘還是打不開 $URL"; exit 1
+      - run: npx playwright install --with-deps chromium
+      - name: 網站與線上對戰
+        env:
+          URL: ${{ steps.site.outputs.url }}
+        run: npm run smoke -- "$URL" --online
+      - name: 相依套件的安全公告
+        if: ${{ !cancelled() }}
+        run: npm audit --audit-level=high

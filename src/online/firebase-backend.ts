@@ -1,11 +1,11 @@
 import { firebaseConfig } from './firebase-config.ts';
-import type { RoomBackend, RoomData, Seat } from './types.ts';
+import type { NewRoom, RoomBackend, RoomData, Seat } from './types.ts';
 
 /**
  * SDK 只有在進入線上對戰時才從 CDN 載入，
  * 單機與 AI 模式完全不需要網路，首頁也不必背著 Firebase 的體積。
  */
-const SDK = 'https://www.gstatic.com/firebasejs/10.7.1';
+const SDK = 'https://www.gstatic.com/firebasejs/13.2.0';
 
 interface DbRef {
   readonly key: string | null;
@@ -78,7 +78,7 @@ export class FirebaseBackend implements RoomBackend {
     return snapshot.exists() ? (snapshot.val() as RoomData) : null;
   }
 
-  create(code: string, room: RoomData): Promise<void> {
+  create(code: string, room: NewRoom): Promise<void> {
     return this.api.set(this.target(`rooms/${code}`), room);
   }
 
@@ -106,7 +106,8 @@ export class FirebaseBackend implements RoomBackend {
     const { query, orderByChild, limitToFirst, get } = this.api;
     const oldest = query(this.target('rooms'), orderByChild('createdAt'), limitToFirst(10));
     const snapshot = await get(oldest);
-    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    // createdAt 是伺服器時間，比較時也要換算成伺服器時間
+    const dayAgo = Date.now() + this.offset - 24 * 60 * 60 * 1000;
     const stale: string[] = [];
     snapshot.forEach((child) => {
       if ((child.val() as RoomData).createdAt < dayAgo) stale.push(child.key);

@@ -135,7 +135,7 @@ export class RoomSession {
       code = generateRoomCode();
     }
     await this.backend.create(code, {
-      createdAt: Date.now(),
+      createdAt: SERVER_TIME,
       config,
       n: 0,
       players: { [yourSeat]: { uid: this.uid, name } },
@@ -254,7 +254,7 @@ export class RoomSession {
     this.creatingRematch = true;
     const code = generateRoomCode();
     await this.backend.create(code, {
-      createdAt: Date.now(),
+      createdAt: SERVER_TIME,
       config: room.config,
       n: 0,
       players: { black: white, white: black },

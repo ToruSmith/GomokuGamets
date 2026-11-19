@@ -16,6 +16,7 @@ import type { RoomData } from '../src/online/types.ts';
 import { PermissionDenied, RulesBackend, RulesDb } from './helpers/rules-db.ts';
 
 const CONFIG = { size: 15, rule: 'freestyle' } as const;
+const NOW = { '.sv': 'timestamp' } as const;
 const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
 
 interface Client {
@@ -292,13 +293,33 @@ describe('安全規則擋下的作弊', () => {
     assert.equal(db.read(`rooms/${code}`), null);
   });
 
+  it('開房時間必須是伺服器時間，不能自己填', () => {
+    const room = (createdAt: unknown) => ({
+      'rooms/QWERTY': {
+        createdAt,
+        config: CONFIG,
+        n: 0,
+        players: { black: { uid: 'x', name: 'ok' } },
+      },
+    });
+    // 本機時鐘慢了兩天的裝置：房間一建立就「過期」，會被別人清掉
+    denied(() => db.write(room(Date.now() - 2 * 24 * 60 * 60 * 1000), { uid: 'x' }));
+    // 寫一個未來的時間，房間就永遠不會被清掉
+    denied(() => db.write(room(Date.now() + 365 * 24 * 60 * 60 * 1000), { uid: 'x' }));
+    db.write(room(NOW), { uid: 'x' });
+    const created = db.read('rooms/QWERTY/createdAt') as number;
+    assert.ok(Math.abs(created - Date.now()) < 1000);
+    // 建立之後也不能改
+    denied(() => db.write({ 'rooms/QWERTY/createdAt': 1 }, { uid: 'x' }));
+  });
+
   it('名字長度與座位名稱受限', () => {
     const fresh = 'ABCDEF';
     denied(() =>
       db.write(
         {
           [`rooms/${fresh}`]: {
-            createdAt: 1,
+            createdAt: NOW,
             config: CONFIG,
             n: 0,
             players: { black: { uid: 'x', name: 'n'.repeat(17) } },
@@ -311,7 +332,7 @@ describe('安全規則擋下的作弊', () => {
       db.write(
         {
           [`rooms/lower1`]: {
-            createdAt: 1,
+            createdAt: NOW,
             config: CONFIG,
             n: 0,
             players: { black: { uid: 'x', name: 'ok' } },
