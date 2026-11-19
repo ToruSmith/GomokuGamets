@@ -1,7 +1,9 @@
 // 部署後驗收：node scripts/smoke.mjs <網址> [--online]
 //
-// 不加參數只讀取網站；加上 --online 會真的匿名登入 Firebase、開一間房間再離開（離開時房間會被刪除）。
+// 不加參數只讀取網站；加上 --online 會真的匿名登入 Firebase、開一間房間再離開（離開時房間會被刪除），
+// 並用 REST API 確認 Firebase 上已經發布最新的 database.rules.json。
 // 每月的巡檢（.github/workflows/health.yml）也跑這支腳本。
+import fs from 'node:fs';
 import { chromium } from 'playwright';
 
 const args = process.argv.slice(2);
@@ -96,6 +98,51 @@ try {
   }
 } finally {
   await browser.close();
+}
+
+if (online) {
+  // 直接用 REST API 確認 Firebase 上的規則是這個儲存庫的版本：用裝置時間當開房時間的寫入必須被拒絕。
+  await check('資料庫規則已發布（開房時間必須是伺服器時間）', async () => {
+    const source = fs.readFileSync(
+      new URL('../src/online/firebase-config.ts', import.meta.url),
+      'utf8',
+    );
+    const field = (name) => new RegExp(`${name}: '([^']+)'`).exec(source)?.[1];
+    const apiKey = field('apiKey');
+    const databaseURL = field('databaseURL');
+    expect(apiKey && databaseURL, '讀不到 firebase-config.ts');
+    const signUp = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Referer: base.href },
+        body: JSON.stringify({ returnSecureToken: true }),
+      },
+    );
+    expect(signUp.ok, `匿名登入失敗：HTTP ${signUp.status}`);
+    const { idToken, localId } = await signUp.json();
+    const code = 'ZZZZZ' + 'ABCDEFGHJKMNPQRSTUVWXY'[Math.floor(Math.random() * 22)];
+    const room = (createdAt) => ({
+      createdAt,
+      config: { size: 15, rule: 'freestyle' },
+      n: 0,
+      players: { black: { uid: localId, name: '巡檢' } },
+    });
+    const url = `${databaseURL}/rooms/${code}.json?auth=${idToken}`;
+    const stale = await fetch(url, { method: 'PUT', body: JSON.stringify(room(1)) });
+    if (stale.ok) await fetch(url, { method: 'DELETE' });
+    expect(
+      !stale.ok,
+      '舊規則還在：用裝置時間開房沒有被擋下，請到 Firebase Console 發布 database.rules.json',
+    );
+    const fresh = await fetch(url, {
+      method: 'PUT',
+      body: JSON.stringify(room({ '.sv': 'timestamp' })),
+    });
+    expect(fresh.ok, `用伺服器時間開房被拒絕：HTTP ${fresh.status}`);
+    const removed = await fetch(url, { method: 'DELETE' });
+    expect(removed.ok, `刪除測試房間失敗：HTTP ${removed.status}`);
+  });
 }
 
 if (failures > 0) {
