@@ -28,8 +28,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: 相依套件的安全公告
-        run: npm audit --audit-level=high
       - name: 決定要檢查的網址
         id: site
         env:
@@ -61,3 +59,6 @@ jobs:
         env:
           URL: ${{ steps.site.outputs.url }}
         run: npm run smoke -- "$URL" --online
+      - name: 相依套件的安全公告
+        if: ${{ !cancelled() }}
+        run: npm audit --audit-level=high

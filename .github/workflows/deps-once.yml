@@ -1,0 +1,28 @@
+name: Deps (one-off)
+
+# 暫時的工作流程：在 GitHub 上更新 package-lock.json 後提交，並在同一個提交裡刪除自己。
+on:
+  push:
+    paths: ['.github/workflows/deps-once.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - run: npm install --save-dev --save-exact sharp@0.35.5
+      - run: npm audit --audit-level=high || true
+      - name: 提交並刪除這個工作流程
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -q .github/workflows/deps-once.yml
+          git add package.json package-lock.json
+          git commit -m "chore: 更新相依套件（sharp 0.35.5，修正 librsvg 的安全公告）"
+          git push
