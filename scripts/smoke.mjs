@@ -88,6 +88,8 @@ try {
       expect(/^[A-HJ-NP-Z2-9]{6}$/.test(text), `房號格式不對：${text}`);
       // 還沒有對手的房間，離開時會被刪除
       await page.getByRole('button', { name: '離開' }).first().click();
+      // 入座後離開會先跳出確認視窗
+      await page.getByRole('dialog').getByRole('button', { name: '離開' }).click();
       await code.waitFor({ state: 'detached', timeout: 15_000 });
       expect(errors.length === 0, errors.join('；'));
     });
