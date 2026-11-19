@@ -66,7 +66,8 @@ await check('Service Worker', async () => {
 
 const browser = await chromium.launch();
 try {
-  const page = await browser.newPage();
+  // 介面語言跟著瀏覽器；巡檢用繁體中文的按鈕文字找元素
+  const page = await browser.newPage({ locale: 'zh-TW' });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
 
